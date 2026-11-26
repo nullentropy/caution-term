@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Caution Term</title>
+<meta name="description" content="A terminal for macOS with tabs, scrollback, mouse selection and optional shaders.">
+<meta name="color-scheme" content="dark">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <img src="icon.svg" alt="" width="40" height="40">
+  <h1>Caution Term</h1>
+  <nav><a href="https://github.com/nullentropy/caution-term">GitHub</a></nav>
+</header>
+
+<main>
+<section>
+  <figure><a href="img/shell.webp">
+    <img src="img/shell.webp" width="1600" height="1106"
+      alt="A shell in Caution Term showing ls, cal and a test run."></a>
+  </figure>
+</section>
+
+<section id="install">
+  <h2>Install</h2>
+  <pre><code>curl -fsSL https://raw.githubusercontent.com/nullentropy/caution-term/main/install.sh | sh</code></pre>
+  <p>This installs <code>Caution Term.app</code> in <code>/Applications</code>. It needs macOS 13 or newer. Releases are also on the <a href="https://github.com/nullentropy/caution-term/releases/latest">releases page</a>.</p>
+</section>
+
+<section>
+  <h2>Keys</h2>
+  <table>
+    <tr><td><kbd>Cmd</kbd>+<kbd>N</kbd></td><td>New window</td></tr>
+    <tr><td><kbd>Cmd</kbd>+<kbd>T</kbd></td><td>New tab</td></tr>
+    <tr><td><kbd>Cmd</kbd>+<kbd>W</kbd></td><td>Close tab</td></tr>
+    <tr><td><kbd>Cmd</kbd>+<kbd>Shift</kbd>+<kbd>]</kbd> / <kbd>[</kbd></td><td>Next / previous tab</td></tr>
+    <tr><td><kbd>Cmd</kbd>+<kbd>C</kbd> / <kbd>V</kbd></td><td>Copy the selection / paste</td></tr>
+    <tr><td><kbd>Cmd</kbd>+<kbd>K</kbd></td><td>Clear scrollback</td></tr>
+    <tr><td><kbd>Cmd</kbd>+<kbd>=</kbd> / <kbd>-</kbd> / <kbd>0</kbd></td><td>Bigger / smaller / default text size</td></tr>
+    <tr><td><kbd>Cmd</kbd>+<kbd>]</kbd> / <kbd>[</kbd></td><td>Next / previous shader</td></tr>
+    <tr><td><kbd>Shift</kbd>+<kbd>Page Up</kbd> / <kbd>Page Down</kbd></td><td>Scroll back / forward a page</td></tr>
+  </table>
+  <p>Other keys go to the program. <kbd>Option</kbd> is Meta.</p>
+</section>
+
+<section>
+  <h2>Shaders</h2>
+  <figure><a href="img/amber.webp">
+    <img src="img/amber.webp" width="1600" height="1106" loading="lazy"
+      alt="The same shell with the Amber Phosphor shader."></a>
+  </figure>
+</section>
+
+<section>
+  <h2>Build from source</h2>
+  <p>Needs Go 1.26 or newer, the Xcode Command Line Tools, and a checkout of caution at <code>../caution</code>.</p>
+  <pre><code>go run .            # run it
+scripts/app.sh      # build dist/Caution Term.app</code></pre>
+  <p>The <code>term</code> package can be used to build other apps around a terminal program. <a href="https://github.com/nullentropy/caution-emacs">Caution Emacs</a> uses it. See the <a href="https://github.com/nullentropy/caution-term#readme">README</a>.</p>
+</section>
+</main>
+</body>
+</html>

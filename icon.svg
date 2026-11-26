@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="100" x2="0" y2="924" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#2e333d"/>
+      <stop offset="1" stop-color="#16191f"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="512" cy="500" r="380" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#51afef" stop-opacity="0.10"/>
+      <stop offset="1" stop-color="#51afef" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="ink" x1="298.0" y1="0" x2="798.0" y2="0" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#c678dd"/>
+      <stop offset="1" stop-color="#51afef"/>
+    </linearGradient>
+  </defs>
+  <rect x="100" y="100" width="824" height="824" rx="185" fill="url(#bg)"/>
+  <rect x="100" y="100" width="824" height="824" rx="185" fill="url(#glow)"/>
+  <g fill="none" stroke="url(#ink)" stroke-width="46.0">
+    <path d="M 733.8 344.7 A 250.0 250.0 0 1 0 733.8 679.3"/>
+    <path d="M 398.0 430.0 L 480.0 512.0 L 398.0 594.0" stroke-linecap="square" stroke-linejoin="miter"/>
+  </g>
+  <rect x="520.0" y="571.0" width="110" height="46.0" fill="url(#ink)"/>
+</svg>
