@@ -17,8 +17,6 @@ To build from source:
 
 - Go 1.26 or newer.
 - The Xcode Command Line Tools, for the C compiler, `codesign` and `lipo`.
-- A checkout of [caution](https://github.com/nullentropy/caution) beside this
-  one, at `../caution`. `go.mod` points there.
 
 ## Install
 
@@ -69,6 +67,16 @@ architecture. Drag it to Applications. Opened from Finder or the Dock, it takes
 
 ## Make a release
 
+Push a tag such as `v1.2.3`. `.github/workflows/release.yml` builds the app on
+a macOS runner and attaches these files to the release for that tag, creating
+the release if it does not exist:
+
+- `CautionTerm-<version>-macos-universal.zip`
+- `CautionTerm-macos-universal.zip`, the one `install.sh` downloads
+- `SHA256SUMS`
+
+To build the zips by hand:
+
 ```
 scripts/release.sh          # version from the tag on HEAD
 scripts/release.sh 1.2.3    # or pass the version
@@ -76,13 +84,8 @@ scripts/release.sh 1.2.3    # or pass the version
 
 The working tree must be clean. Without an argument, HEAD must have a tag; a
 leading `v` is dropped. The script builds arm64 and amd64 binaries, joins them
-into one universal app, sets the version in its `Info.plist` and signs it ad
-hoc. It writes two zips to `release/`:
-
-- `CautionTerm-<version>-macos-universal.zip`
-- `CautionTerm-macos-universal.zip`, the one `install.sh` downloads
-
-Upload both to a GitHub release for the tag.
+into one universal app, sets the version in its `Info.plist`, signs it ad hoc
+and writes the zips to `release/`.
 
 ## Using it
 
