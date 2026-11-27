@@ -7,7 +7,7 @@ require (
 	github.com/charmbracelet/x/ansi v0.11.10
 	github.com/charmbracelet/x/vt v0.1.0
 	github.com/creack/pty v1.1.24
-	github.com/nullentropy/caution v0.33.1
+	github.com/nullentropy/caution v0.34.1
 )
 
 require (
