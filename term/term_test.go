@@ -2,8 +2,10 @@ package term
 
 import (
 	"net"
+	"os"
 	"strconv"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -119,25 +121,41 @@ func findGrid(n map[string]any) (int, map[string]any) {
 	return 0, nil
 }
 
-func TestScrollbackAndSelectionWorkOnRealOutput(t *testing.T) {
-	terms := make(chan *Term, 1)
-	mount := func(s *caution.Session) *caution.Node {
-		w := NewWindow(s, WindowOptions{})
-		terms <- w.Open(Options{Argv: []string{"sh", "-c", `seq 1 60; printf 'alpha beta\n'; sleep 30`}})
-		return w.Node()
-	}
-	l, err := net.Listen("tcp", "127.0.0.1:0")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer l.Close()
-	go caution.ServeListener(l, mount, caution.Options{})
+// caution registers its handler once per process and keeps the first mount
+// so every test shares one server and hands it options
+var (
+	serveOnce sync.Once
+	serveAddr string
+	serveErr  error
+	nextOpts  = make(chan Options, 1)
+	nextTerm  = make(chan *Term, 1)
+)
 
-	c, _, err := websocket.DefaultDialer.Dial("ws://"+l.Addr().String()+"/ws?vw=800&vh=600", nil)
+func open(t *testing.T, o Options) (*screen, *Term) {
+	t.Helper()
+	serveOnce.Do(func() {
+		l, err := net.Listen("tcp", "127.0.0.1:0")
+		if err != nil {
+			serveErr = err
+			return
+		}
+		serveAddr = l.Addr().String()
+		go caution.ServeListener(l, func(s *caution.Session) *caution.Node {
+			w := NewWindow(s, WindowOptions{})
+			nextTerm <- w.Open(<-nextOpts)
+			return w.Node()
+		}, caution.Options{})
+	})
+	if serveErr != nil {
+		t.Fatal(serveErr)
+	}
+	nextOpts <- o
+
+	c, _, err := websocket.DefaultDialer.Dial("ws://"+serveAddr+"/ws?vw=800&vh=600", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer c.Close()
+	t.Cleanup(func() { c.Close() })
 	var m map[string]any
 	if err := c.ReadJSON(&m); err != nil {
 		t.Fatal(err)
@@ -150,7 +168,42 @@ func TestScrollbackAndSelectionWorkOnRealOutput(t *testing.T) {
 	if s, ok := m["seq"].(float64); ok {
 		sc.seq = int(s)
 	}
-	term := <-terms
+	return sc, <-nextTerm
+}
+
+// child of TestOneWriteRendersAsOneFrame, one write much bigger than a pty
+// read with row 0 going A then B
+func init() {
+	if os.Getenv("CAUTION_TERM_ONE_WRITE") == "" {
+		return
+	}
+	var b strings.Builder
+	b.WriteString("\x1b[2J\x1b[1;1HA")
+	for b.Len() < 32<<10 {
+		b.WriteString("\x1b[6;1Hfiller")
+	}
+	b.WriteString("\x1b[1;1HB")
+	time.Sleep(500 * time.Millisecond)
+	os.Stdout.WriteString(b.String())
+	time.Sleep(30 * time.Second)
+	os.Exit(0)
+}
+
+func TestOneWriteRendersAsOneFrame(t *testing.T) {
+	sc, _ := open(t, Options{Argv: []string{os.Args[0]}, Env: []string{"CAUTION_TERM_ONE_WRITE=1"}})
+	sc.send("grid-size", map[string]any{"cols": 20, "rows": 10})
+	sawA := false
+	sc.until("the end of the write", func() bool {
+		sawA = sawA || sc.row(0) == "A"
+		return sc.row(0) == "B"
+	})
+	if sawA {
+		t.Fatal("drew row 0 as A, the middle of a single write")
+	}
+}
+
+func TestScrollbackAndSelectionWorkOnRealOutput(t *testing.T) {
+	sc, term := open(t, Options{Argv: []string{"sh", "-c", `seq 1 60; printf 'alpha beta\n'; sleep 30`}})
 	sc.send("grid-size", map[string]any{"cols": 20, "rows": 10})
 	sc.until("the program's output", func() bool { return sc.row(8) == "alpha beta" })
 	if got := sc.row(0); got != "53" {

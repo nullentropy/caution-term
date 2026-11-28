@@ -9,6 +9,7 @@ import (
 	"sync"
 	"sync/atomic"
 	"syscall"
+	"time"
 
 	uv "github.com/charmbracelet/ultraviolet"
 	"github.com/charmbracelet/x/ansi"
@@ -179,6 +180,8 @@ func (t *Term) start(cols, rows int) error {
 			}
 		}
 	}()
+	output := make(chan struct{}, 1)
+	go t.paceRenders(output)
 	go func() {
 		buf := make([]byte, 64<<10)
 		for {
@@ -187,14 +190,16 @@ func (t *Term) start(cols, rows int) error {
 				t.mu.Lock()
 				emu.Write(buf[:n])
 				t.mu.Unlock()
-				if !t.pending.Swap(true) {
-					t.s.Update(t.render)
+				select {
+				case output <- struct{}{}:
+				default:
 				}
 			}
 			if err != nil {
 				break
 			}
 		}
+		close(output)
 		cmd.Wait()
 		t.mu.Lock()
 		again := t.restarting
@@ -214,6 +219,41 @@ func (t *Term) start(cols, rows int) error {
 		})
 	}()
 	return nil
+}
+
+const (
+	renderQuiet = 2 * time.Millisecond
+	renderMax   = 16 * time.Millisecond
+)
+
+// macos ptys hand over at most 1024 bytes per read so one emacs redraw
+// arrives in pieces and rendering after the first shows half a screen
+// render once output goes quiet, or every renderMax while it keeps coming
+func (t *Term) paceRenders(output <-chan struct{}) {
+	quiet := time.NewTimer(time.Hour)
+	quiet.Stop()
+	for range output {
+		deadline := time.After(renderMax)
+		quiet.Reset(renderQuiet)
+	wait:
+		for {
+			select {
+			case _, ok := <-output:
+				if !ok {
+					break wait
+				}
+				quiet.Reset(renderQuiet)
+			case <-quiet.C:
+				break wait
+			case <-deadline:
+				quiet.Stop()
+				break wait
+			}
+		}
+		if !t.pending.Swap(true) {
+			t.s.Update(t.render)
+		}
+	}
 }
 
 func (t *Term) setMode(m ansi.Mode, on bool) {
